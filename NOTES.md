@@ -55,8 +55,11 @@
 
 ## Step 6: Usage Log and Budget Manager
 - Implemented `zeroburn.gateway.usage`: appends structured JSON lines to `~/.zeroburn/usage.jsonl` matching section 6.3 schema.
-- Implemented `zeroburn.gateway.budget`:
-  - `estimate_tokens_and_cost`: exact pre-call estimation (`total_chars / chars_per_token`, `(in * price_in + max_tokens * price_out) / 1e6`).
-  - `BudgetManager.check`: checks proposed calls against monthly limit, returning `Decision.OK`, `Decision.DOWNSHIFT`, or `Decision.LIMIT`. Local model calls cost 0 and never trigger LIMIT.
-  - Atomic ledger persistence: uses tempfile and replace to safeguard `~/.zeroburn/ledger.json` from corruption during interruptions.
-  - Confirmed calls that would exceed limit are blocked before contacting the gateway client.
+- Implemented `zeroburn.gateway.budget`: pre-call estimation, budget threshold checks (`Decision.OK`, `Decision.DOWNSHIFT`, `Decision.LIMIT`), and atomic persistence of `~/.zeroburn/ledger.json`.
+
+## Step 7: Router and Confidential Routing
+- Implemented `zeroburn.gateway.router.RoutePlan` and `Router`:
+  - `assert_local_only`: hard assert running on every call, verifying every model in confidential chain starts with `ollama/`.
+  - Normal sessions: routes `heavy` or `light` based on turn context; always appends local model as final fallback; enforces `light` on `Decision.DOWNSHIFT` and `local_only` on `Decision.LIMIT`.
+  - Tier selection: deterministic heuristics (exploration read turns use `light`, compaction/commit/final use `light`, writes/errors use `heavy`).
+  - Never reads user prompt or model text to determine model selection.
