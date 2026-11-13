@@ -33,12 +33,12 @@
 ## Step 2: Config, Errors and Gateway Client
 - Implemented `zeroburn.config`: typed Pydantic models for models, budget, failover, agent, freshness, prices_usd_per_million, and context_limits. Enforces configuration precedence (`env` > repo `zeroburn.toml` > user `~/.zeroburn/zeroburn.toml` > defaults) and fails fast with a readable error message when any model is missing from `prices_usd_per_million`.
 - Implemented `zeroburn.errors`: ZeroBurnError base exception and subclasses: `RateLimited`, `ProviderDown`, `BudgetBlocked`, `GatewayPolicyBlocked`, `BadRequest`, `AuthError`, `PolicyViolation`, `ApprovalDenied`, `BudgetExhausted`.
-- Implemented `zeroburn.gateway.client.GatewayClient`: uses OpenAI SDK pointed at `BIFROST_URL` with virtual key headers (`Authorization: Bearer <vk>` and `x-bf-vk: <vk>`). Fully maps all HTTP error codes and body payloads:
-  - 429 without budget wording -> `RateLimited`
-  - 429 / 403 with budget wording -> `BudgetBlocked`
-  - 403 / 400 with gateway provider refusal -> `GatewayPolicyBlocked`
-  - 400 invalid schema -> `BadRequest`
-  - 401 unauthorized -> `AuthError`
-  - 5xx, timeouts, connection errors -> `ProviderDown`
+- Implemented `zeroburn.gateway.client.GatewayClient`: uses OpenAI SDK pointed at `BIFROST_URL` with virtual key headers (`Authorization: Bearer <vk>` and `x-bf-vk: <vk>`). Fully maps all HTTP error codes and body payloads.
 - Implemented `zeroburn ping` CLI command testing both virtual keys and reporting serving model.
-- 17 unit tests in `tests/test_client.py`, `tests/test_config.py`, and `tests/test_ping.py` cover all error mappings, config validation, and ping logic.
+
+## Step 3: Policy Core (Sandbox, Repo Flag, Approval Gate, Risk Display)
+- Implemented `zeroburn.policy.repo_flag`: detects confidential repositories via `.zeroburn/confidential` marker or `confidential = true` in `zeroburn.toml`. Also provides `mark_confidential`.
+- Implemented `zeroburn.policy.sandbox`: strictly resolves paths using `realpath`, preventing parent directory (`..`) traversal and symlink escapes outside `repo_root`. Enforces deny list blocking writes to `.git/`, `.zeroburn/`, `zeroburn.toml`, and `.env*`. Detects sensitive reads (`.env*`, `*.pem`, `id_rsa*`) requiring human confirmation.
+- Implemented `zeroburn.policy.risk`: computes display-only risk scores (0-100) for all actions (create_file: 30, apply_edit: 25/60, shell: 40/70, git: 35/70/80). Risk score never skips approval.
+- Implemented `zeroburn.policy.approval`: `ActionKind` enum (`READ`, `WRITE`, `SHELL`, `GIT`), `ActionRequest`, `Approver` protocol, `ConsoleApprover` (Rich panel with default No), and `ApprovalGate` (default-deny; reads are free, writes/shell/git require explicit human approval, raising `ApprovalDenied` on refusal).
+- Verified with 10 unit tests in `tests/test_policy.py`. Audited codebase to guarantee zero bypass options, no `--yes` flag, and no environment variable override.
