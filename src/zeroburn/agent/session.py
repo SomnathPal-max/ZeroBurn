@@ -52,6 +52,18 @@ class Session:
         self.models_used: list[str] = []
         self.failovers_count: int = 0
 
+    def compact_if_needed(self, target_token_limit: int | None = None) -> int:
+        from zeroburn.context.compaction import compact_messages
+        compacted, elisions = compact_messages(
+            messages=self.messages,
+            read_cache=self.read_cache,
+            compact_at_tokens=self.config.agent.compact_at_tokens,
+            target_token_limit=target_token_limit,
+            chars_per_token=self.config.budget.chars_per_token,
+        )
+        self.messages = compacted
+        return elisions
+
     @property
     def confidential(self) -> bool:
         """Immutable confidentiality flag."""

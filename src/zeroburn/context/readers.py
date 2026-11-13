@@ -66,10 +66,11 @@ def read_file(
     repo_root: str | Path,
     cache: ReadCache | None = None,
     turn: int = 0,
+    capped: bool = True,
 ) -> str:
-    """Read full file only if 150 lines or fewer.
+    """Read full file only if 150 lines or fewer (unless capped=False in naive mode).
     
-    If > 150 lines, instructs the model to use read_range or get_symbol.
+    If > 150 lines and capped=True, instructs the model to use read_range or get_symbol.
     """
     target = resolve(repo_root, path)
     if not target.is_file():
@@ -83,7 +84,7 @@ def read_file(
     all_lines = content.splitlines()
     total_lines = len(all_lines)
 
-    if total_lines > 150:
+    if capped and total_lines > 150:
         return (
             f"File '{path}' has {total_lines} lines (> 150 lines limit). "
             f"To save tokens, please use read_range('{path}', start, end) "

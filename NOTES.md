@@ -67,9 +67,10 @@
 ## Step 9: Agent Loop and CLI Run (First End-to-End)
 - Implemented `zeroburn.agent.prompts`: exact verbatim system prompt per Appendix A.
 - Implemented `zeroburn.agent.session`: holds repository root, immutable confidentiality flag, message history, read cache, touched files, step counter, session ID, user, and token/cost aggregates.
-- Implemented `zeroburn.agent.loop.run_task`:
-  - Injects system prompt, user task, and initial repo map (in zeroburn mode).
-  - Iterates up to `max_steps`: selects tier, estimates tokens/cost, checks monthly budget ledger, invokes `call_with_chain`, commits actual cost, logs usage to `usage.jsonl`, executes tools through `ToolRegistry` with approval gating, and breaks on `finish` or completion.
-  - Formats summary table footer with steps, tokens, USD cost, models used, and failover count.
+- Implemented `zeroburn.agent.loop.run_task`: orchestrates full lifecycle with approvals, budget checks, failover, and metrics reporting.
 - Integrated `zeroburn run` in `src/zeroburn/cli.py`.
-- Verified end-to-end task execution in `tests/test_loop.py`.
+
+## Step 10: Compaction, Light Exploration and Naive Baseline Mode
+- Implemented `zeroburn.context.compaction.compact_messages`: preserves system prompt, task, and the last 4 messages. Replaces older tool results with one-line stubs (`[elided: {tool_name} {path}, ~{tokens} tokens; re-read if needed]`) and invalidates the read cache for elided paths so the model can re-read them if required.
+- Implemented `zeroburn.agent.modes`: defines `ZEROBURN_MODE` vs `NAIVE_MODE`. Both share the exact same system prompt and default-deny approval gate. Naive mode operates without repo map, without read cache, without read_file size caps, without context compaction, and locked to the heavy tier.
+- Verified in `tests/test_compaction.py`.

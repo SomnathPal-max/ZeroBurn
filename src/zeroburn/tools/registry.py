@@ -190,10 +190,13 @@ class ToolRegistry:
         max_chars = getattr(getattr(session, "config", None), "agent", None)
         tool_result_max_chars = max_chars.tool_result_max_chars if max_chars else 4000
 
-        # Track touched files
-        touched = getattr(session, "touched_files", None)
-        if touched is not None and "path" in args:
-            touched.add(str(args["path"]).replace("\\", "/"))
+        # In naive mode, disable read cache and size cap
+        is_naive = getattr(session, "mode", "zeroburn") == "naive"
+        if is_naive:
+            cache = None
+            read_capped = False
+        else:
+            read_capped = True
 
         output = ""
         try:
@@ -263,6 +266,7 @@ class ToolRegistry:
                     repo_root=repo_root,
                     cache=cache,
                     turn=turn,
+                    capped=read_capped,
                 )
 
             elif name == "apply_edit":

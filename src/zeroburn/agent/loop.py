@@ -73,8 +73,11 @@ def run_task(
         if compact_fn and mode == "zeroburn":
             compact_fn()
 
-        # Step 7: Tier selection
-        tier = router.pick_tier(session)
+        # Step 7: Tier selection (naive mode never uses light tier)
+        if mode == "naive":
+            tier = "heavy"
+        else:
+            tier = router.pick_tier(session)
 
         # Step 6: Pre-call budget estimation and ledger check
         initial_plan = router.plan(session, tier=tier, budget_decision=Decision.OK)
