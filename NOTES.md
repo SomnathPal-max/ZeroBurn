@@ -58,8 +58,13 @@
 - Implemented `zeroburn.gateway.budget`: pre-call estimation, budget threshold checks (`Decision.OK`, `Decision.DOWNSHIFT`, `Decision.LIMIT`), and atomic persistence of `~/.zeroburn/ledger.json`.
 
 ## Step 7: Router and Confidential Routing
-- Implemented `zeroburn.gateway.router.RoutePlan` and `Router`:
-  - `assert_local_only`: hard assert running on every call, verifying every model in confidential chain starts with `ollama/`.
-  - Normal sessions: routes `heavy` or `light` based on turn context; always appends local model as final fallback; enforces `light` on `Decision.DOWNSHIFT` and `local_only` on `Decision.LIMIT`.
-  - Tier selection: deterministic heuristics (exploration read turns use `light`, compaction/commit/final use `light`, writes/errors use `heavy`).
-  - Never reads user prompt or model text to determine model selection.
+- Implemented `zeroburn.gateway.router.RoutePlan` and `Router`: hard assertion for confidential repos, dynamic tier selection, and local fallback guarantee.
+
+## Step 8: Failover
+- Implemented `zeroburn.ui.console`: Rich panels for model switch banners (`MODEL SWITCH: {old} -> {new} (reason: {reason})`) and summary footer tables.
+- Implemented `zeroburn.gateway.failover.call_with_chain`:
+  - Retries each model in plan.chain up to `1 + retries_per_model` times with backoff on `RateLimited` or `ProviderDown`.
+  - On exhausting a model, emits a prominent console banner before moving to the next model in the chain.
+  - Maintains session state entirely on the agent side.
+  - Hard-asserts local-only chain for confidential sessions (cloud model cannot be reached).
+  - Immediately propagates `BudgetBlocked`, `GatewayPolicyBlocked`, `BadRequest`, and `AuthError` without triggering failover.
