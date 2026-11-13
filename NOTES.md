@@ -73,4 +73,8 @@
 ## Step 10: Compaction, Light Exploration and Naive Baseline Mode
 - Implemented `zeroburn.context.compaction.compact_messages`: preserves system prompt, task, and the last 4 messages. Replaces older tool results with one-line stubs (`[elided: {tool_name} {path}, ~{tokens} tokens; re-read if needed]`) and invalidates the read cache for elided paths so the model can re-read them if required.
 - Implemented `zeroburn.agent.modes`: defines `ZEROBURN_MODE` vs `NAIVE_MODE`. Both share the exact same system prompt and default-deny approval gate. Naive mode operates without repo map, without read cache, without read_file size caps, without context compaction, and locked to the heavy tier.
-- Verified in `tests/test_compaction.py`.
+
+## Step 11: Freshness Check with Tavily
+- Implemented `zeroburn.freshness.detector`: parses shell output to identify stale SDK exceptions (`ModuleNotFoundError`, `ImportError: cannot import name`, `AttributeError: ... has no attribute`, `TypeError: ... unexpected keyword argument`, `DeprecationWarning`, `RemovedIn`).
+- Implemented `zeroburn.freshness.cache`: local disk cache for Tavily web responses keyed by query sha256 hash to eliminate redundant web queries.
+- Implemented `zeroburn.freshness.tavily_client`: builds targeted queries (`<package> <version> breaking change migration <symbol>`), bounds injected tokens to `max_inject_tokens`, wraps notes inside `<untrusted_web_notes>`, and strictly enforces local-only isolation on confidential repositories (never sending data to Tavily).

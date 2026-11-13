@@ -204,9 +204,9 @@ def run_task(
                 session.last_turn_had_error = True
 
             # Freshness check hook (Step 11 integration)
-            freshness_hook = getattr(session, "freshness_check", None)
-            if freshness_hook and not session.confidential:
-                freshness_hook(tool_output)
+            if tc.name == "run_shell":
+                from zeroburn.freshness.tavily_client import maybe_freshness_lookup
+                maybe_freshness_lookup(tool_output, session)
 
             if tc.name == "finish":
                 finish_called = True
