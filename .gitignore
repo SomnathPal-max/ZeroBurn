@@ -1,0 +1,23 @@
+# Environment & Virtual Environments
+.env
+.venv/
+env/
+venv/
+
+# Python cache & build
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# ZeroBurn state
+.zeroburn/ledger.json
+.zeroburn/usage.jsonl
+.zeroburn/freshness_cache.json
+
+# Pytest & tooling
+.pytest_cache/
+.coverage
+htmlcov/

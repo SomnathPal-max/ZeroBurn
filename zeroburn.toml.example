@@ -1,0 +1,37 @@
+[models]
+local = "ollama/llama3.1:8b" # confidential + last-resort
+light_chain = ["openai/gpt-4o-mini", "ollama/llama3.1:8b"] # EDIT to models you have keys for
+heavy_chain = ["openai/gpt-4o", "openai/gpt-4o-mini", "ollama/llama3.1:8b"]
+
+[prices_usd_per_million] # input, output; local models are 0
+"openai/gpt-4o" = [2.50, 10.00] # EDIT with current prices
+"openai/gpt-4o-mini" = [0.15, 0.60]
+"ollama/llama3.1:8b" = [0.0, 0.0]
+
+[context_limits] # tokens, used to trigger compaction before failover
+"openai/gpt-4o" = 128000
+"ollama/llama3.1:8b" = 8000
+
+[budget]
+user_limit_usd = 2.00 # per user per calendar month
+warn_at = 0.75 # print warning
+downshift_at = 0.75 # light chain only from here
+on_limit = "local_only" # or "stop"; behavior when estimate would exceed limit
+chars_per_token = 4
+
+[failover]
+retries_per_model = 1
+backoff_seconds = 1.0
+request_timeout_s = 60
+
+[agent]
+max_steps = 25
+max_tokens_per_call = 1500
+tool_result_max_chars = 4000
+compact_at_tokens = 6000
+explore_with_light = true
+
+[freshness]
+enabled = true
+max_lookups_per_task = 2
+max_inject_tokens = 600
