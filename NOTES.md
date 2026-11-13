@@ -100,5 +100,19 @@
   - **R3 (Confidential isolation):** Verified that confidential repositories strictly enforce `local_only` tier with `vk_confidential`, only allow `ollama/*` local models, and reject any injected cloud model via hard assertions in code.
   - **R4 (Approval gates):** Verified that safe reads (`.py`, `.md`) are free, while sensitive reads (`.env`, `id_rsa`, `*.pem`), file edits/creations, shell invocations, and git commands require explicit human confirmation. Verified clean error recovery on user denial, and confirmed injection attacks (`git push origin main`) are intercepted by the deterministic gate.
 
+## Step 15: README, Demo Script and Submission Package
+- Authored comprehensive `README.md` with:
+  - Complete architecture diagram (ASCII & Mermaid).
+  - Four-requirement enforcement matrix mapping R1, R2, R3, R4 to exact source files and line ranges.
+  - Benchmark evaluation results showing 73.0% cost and token reduction across 6 maintenance tasks.
+  - Quick start instructions (<10 commands).
+  - Bifrost gateway and Ollama setup guide.
+  - Comprehensive threat model (in-scope defenses vs out-of-scope boundaries).
+  - Honest analysis of local LLM capabilities vs frontier cloud models.
+  - Full CLI command reference.
+- Authored `demo/DEMO.md`: A 4-minute scripted demonstration covering 4 distinct acts (token-efficient editing & approval, outage failover, confidential isolation, and budget limit enforcement).
+- Verified complete test suite: 74 tests collected, 73 passed, 1 skipped. Zero secrets in Git history.
+
+
 
 
