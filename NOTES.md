@@ -45,8 +45,15 @@
 
 ## Step 4: Context Engine (Repo Map, Readers, Read Cache)
 - Implemented `zeroburn.context.repo_map`: walks repository respecting `.gitignore` via pathspec, excluding binary and oversized (>500KB) files. Uses `tree-sitter` and `tree-sitter-python` to extract class and function signatures with line numbers (`class Name L12-58`, `def func(args) -> ret L60-88`). Prioritizes files in focus, matching task keywords, or recently touched. Enforces a strict budget ceiling (under 1500 tokens).
-- Implemented `zeroburn.context.readers`:
-  - `read_range`: line-numbered extraction capped at 200 lines.
-  - `get_symbol`: AST-based exact symbol/function extraction via tree-sitter.
-  - `read_file`: restricted to files with <= 150 lines; files above this cap receive an instruction to use `read_range` or `get_symbol`.
-- Implemented `zeroburn.context.read_cache`: tracks previously read ranges with SHA256 hashes. Duplicate reads return an 8-character hash stub `{"status":"unchanged", "hash":"<8 chars>"}`. Any write invalidates cached entries for that path.
+- Implemented `zeroburn.context.readers`: `read_range` (line-numbered, max 200 lines), `get_symbol` (AST extraction via tree-sitter), and `read_file` (size-capped at 150 lines).
+- Implemented `zeroburn.context.read_cache`: tracks previously read ranges with SHA256 hashes, returning unchanged stubs for identical reads. Write operations invalidate cached entries.
+
+## Step 5: Tool Registry
+- Implemented `zeroburn.tools`:
+  - Concise JSON schemas (`TOOL_SCHEMAS`) for 10 tools (`repo_map`, `search_code`, `read_range`, `get_symbol`, `read_file`, `apply_edit`, `create_file`, `run_shell`, `git`, `finish`) with descriptions under 15 words.
+  - `apply_edit`: requires unique old string match; builds unified diff and requests human approval via `ApprovalGate` before modifying file.
+  - `create_file`: verifies file does not exist, requests human approval, and creates file.
+  - `run_shell`: executes commands only upon approval; captures stdout+stderr with timeout and character truncation.
+  - `git`: all Git invocations (including status/diff) require approval and execute with `shell=False`.
+  - Read tools run free for normal repository files, but prompt for human approval on sensitive files (`.env*`, `*.pem`, `id_rsa*`).
+  - `ToolRegistry.execute`: formats results wrapped in `<tool_result name=...>...</tool_result>` truncated to `tool_result_max_chars`.
