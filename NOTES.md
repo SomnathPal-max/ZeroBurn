@@ -49,11 +49,14 @@
 - Implemented `zeroburn.context.read_cache`: tracks previously read ranges with SHA256 hashes, returning unchanged stubs for identical reads. Write operations invalidate cached entries.
 
 ## Step 5: Tool Registry
-- Implemented `zeroburn.tools`:
-  - Concise JSON schemas (`TOOL_SCHEMAS`) for 10 tools (`repo_map`, `search_code`, `read_range`, `get_symbol`, `read_file`, `apply_edit`, `create_file`, `run_shell`, `git`, `finish`) with descriptions under 15 words.
-  - `apply_edit`: requires unique old string match; builds unified diff and requests human approval via `ApprovalGate` before modifying file.
-  - `create_file`: verifies file does not exist, requests human approval, and creates file.
-  - `run_shell`: executes commands only upon approval; captures stdout+stderr with timeout and character truncation.
-  - `git`: all Git invocations (including status/diff) require approval and execute with `shell=False`.
-  - Read tools run free for normal repository files, but prompt for human approval on sensitive files (`.env*`, `*.pem`, `id_rsa*`).
-  - `ToolRegistry.execute`: formats results wrapped in `<tool_result name=...>...</tool_result>` truncated to `tool_result_max_chars`.
+- Implemented `zeroburn.tools`: concise JSON schemas for 10 tools with descriptions under 15 words.
+- Implemented gated execution: writes generate diffs and require approval; shell runs only with approval; all git subcommands require approval; sensitive reads require approval.
+- Enforced output truncation to `tool_result_max_chars`.
+
+## Step 6: Usage Log and Budget Manager
+- Implemented `zeroburn.gateway.usage`: appends structured JSON lines to `~/.zeroburn/usage.jsonl` matching section 6.3 schema.
+- Implemented `zeroburn.gateway.budget`:
+  - `estimate_tokens_and_cost`: exact pre-call estimation (`total_chars / chars_per_token`, `(in * price_in + max_tokens * price_out) / 1e6`).
+  - `BudgetManager.check`: checks proposed calls against monthly limit, returning `Decision.OK`, `Decision.DOWNSHIFT`, or `Decision.LIMIT`. Local model calls cost 0 and never trigger LIMIT.
+  - Atomic ledger persistence: uses tempfile and replace to safeguard `~/.zeroburn/ledger.json` from corruption during interruptions.
+  - Confirmed calls that would exceed limit are blocked before contacting the gateway client.
