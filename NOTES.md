@@ -37,8 +37,16 @@
 - Implemented `zeroburn ping` CLI command testing both virtual keys and reporting serving model.
 
 ## Step 3: Policy Core (Sandbox, Repo Flag, Approval Gate, Risk Display)
-- Implemented `zeroburn.policy.repo_flag`: detects confidential repositories via `.zeroburn/confidential` marker or `confidential = true` in `zeroburn.toml`. Also provides `mark_confidential`.
+- Implemented `zeroburn.policy.repo_flag`: detects confidential repositories via `.zeroburn/confidential` marker or `confidential = true` in `zeroburn.toml`.
 - Implemented `zeroburn.policy.sandbox`: strictly resolves paths using `realpath`, preventing parent directory (`..`) traversal and symlink escapes outside `repo_root`. Enforces deny list blocking writes to `.git/`, `.zeroburn/`, `zeroburn.toml`, and `.env*`. Detects sensitive reads (`.env*`, `*.pem`, `id_rsa*`) requiring human confirmation.
-- Implemented `zeroburn.policy.risk`: computes display-only risk scores (0-100) for all actions (create_file: 30, apply_edit: 25/60, shell: 40/70, git: 35/70/80). Risk score never skips approval.
-- Implemented `zeroburn.policy.approval`: `ActionKind` enum (`READ`, `WRITE`, `SHELL`, `GIT`), `ActionRequest`, `Approver` protocol, `ConsoleApprover` (Rich panel with default No), and `ApprovalGate` (default-deny; reads are free, writes/shell/git require explicit human approval, raising `ApprovalDenied` on refusal).
-- Verified with 10 unit tests in `tests/test_policy.py`. Audited codebase to guarantee zero bypass options, no `--yes` flag, and no environment variable override.
+- Implemented `zeroburn.policy.risk`: computes display-only risk scores (0-100) for all actions.
+- Implemented `zeroburn.policy.approval`: `ActionKind` enum, `ActionRequest`, `Approver` protocol, `ConsoleApprover` (Rich panel with default No), and `ApprovalGate`.
+- Verified with 10 unit tests in `tests/test_policy.py`.
+
+## Step 4: Context Engine (Repo Map, Readers, Read Cache)
+- Implemented `zeroburn.context.repo_map`: walks repository respecting `.gitignore` via pathspec, excluding binary and oversized (>500KB) files. Uses `tree-sitter` and `tree-sitter-python` to extract class and function signatures with line numbers (`class Name L12-58`, `def func(args) -> ret L60-88`). Prioritizes files in focus, matching task keywords, or recently touched. Enforces a strict budget ceiling (under 1500 tokens).
+- Implemented `zeroburn.context.readers`:
+  - `read_range`: line-numbered extraction capped at 200 lines.
+  - `get_symbol`: AST-based exact symbol/function extraction via tree-sitter.
+  - `read_file`: restricted to files with <= 150 lines; files above this cap receive an instruction to use `read_range` or `get_symbol`.
+- Implemented `zeroburn.context.read_cache`: tracks previously read ranges with SHA256 hashes. Duplicate reads return an 8-character hash stub `{"status":"unchanged", "hash":"<8 chars>"}`. Any write invalidates cached entries for that path.
