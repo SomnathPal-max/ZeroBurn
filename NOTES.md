@@ -62,9 +62,14 @@
 
 ## Step 8: Failover
 - Implemented `zeroburn.ui.console`: Rich panels for model switch banners (`MODEL SWITCH: {old} -> {new} (reason: {reason})`) and summary footer tables.
-- Implemented `zeroburn.gateway.failover.call_with_chain`:
-  - Retries each model in plan.chain up to `1 + retries_per_model` times with backoff on `RateLimited` or `ProviderDown`.
-  - On exhausting a model, emits a prominent console banner before moving to the next model in the chain.
-  - Maintains session state entirely on the agent side.
-  - Hard-asserts local-only chain for confidential sessions (cloud model cannot be reached).
-  - Immediately propagates `BudgetBlocked`, `GatewayPolicyBlocked`, `BadRequest`, and `AuthError` without triggering failover.
+- Implemented `zeroburn.gateway.failover.call_with_chain`: retries each model in plan.chain up to `1 + retries_per_model` times with backoff on `RateLimited` or `ProviderDown`, emitting console banner before switching models.
+
+## Step 9: Agent Loop and CLI Run (First End-to-End)
+- Implemented `zeroburn.agent.prompts`: exact verbatim system prompt per Appendix A.
+- Implemented `zeroburn.agent.session`: holds repository root, immutable confidentiality flag, message history, read cache, touched files, step counter, session ID, user, and token/cost aggregates.
+- Implemented `zeroburn.agent.loop.run_task`:
+  - Injects system prompt, user task, and initial repo map (in zeroburn mode).
+  - Iterates up to `max_steps`: selects tier, estimates tokens/cost, checks monthly budget ledger, invokes `call_with_chain`, commits actual cost, logs usage to `usage.jsonl`, executes tools through `ToolRegistry` with approval gating, and breaks on `finish` or completion.
+  - Formats summary table footer with steps, tokens, USD cost, models used, and failover count.
+- Integrated `zeroburn run` in `src/zeroburn/cli.py`.
+- Verified end-to-end task execution in `tests/test_loop.py`.

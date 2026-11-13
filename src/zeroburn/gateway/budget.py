@@ -20,8 +20,15 @@ class Decision(str, Enum):
 
 
 def get_default_ledger_path() -> Path:
-    base = Path.home() / ".zeroburn"
-    base.mkdir(parents=True, exist_ok=True)
+    if custom := os.environ.get("ZEROBURN_HOME"):
+        base = Path(custom)
+    else:
+        base = Path.home() / ".zeroburn"
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+    except (PermissionError, OSError):
+        base = Path(".zeroburn")
+        base.mkdir(parents=True, exist_ok=True)
     return base / "ledger.json"
 
 

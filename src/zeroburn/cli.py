@@ -2,11 +2,14 @@
 from __future__ import annotations
 
 import typer
+from pathlib import Path
 from typing import Optional
 from rich.console import Console
 
 from zeroburn.config import load_config
+from zeroburn.policy import repo_flag
 from zeroburn.gateway.client import GatewayClient
+from zeroburn.agent.loop import run_task
 
 app = typer.Typer(
     name="zeroburn",
@@ -17,9 +20,27 @@ console = Console()
 
 
 @app.command()
-def init() -> None:
+def init(
+    path: str = typer.Option(".", "--path", "-p", help="Directory to initialize."),
+) -> None:
     """Create zeroburn.toml and .zeroburn/ in the current repo."""
-    console.print("[green]Initialized ZeroBurn configuration.[/green]")
+    root = Path(path).resolve()
+    target_dir = root / ".zeroburn"
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    toml_path = root / "zeroburn.toml"
+    example_path = Path("zeroburn.toml.example")
+    if not toml_path.exists():
+        if example_path.exists():
+            toml_path.write_text(example_path.read_text(encoding="utf-8"), encoding="utf-8")
+        else:
+            toml_path.write_text(
+                '[models]\nlocal = "ollama/llama3.1:8b"\n'
+                'light_chain = ["openai/gpt-4o-mini", "ollama/llama3.1:8b"]\n'
+                'heavy_chain = ["openai/gpt-4o", "openai/gpt-4o-mini", "ollama/llama3.1:8b"]\n',
+                encoding="utf-8",
+            )
+    console.print(f"[green]Initialized ZeroBurn configuration at {root}[/green]")
 
 
 @app.command()
@@ -29,7 +50,8 @@ def run(
     mode: str = typer.Option("zeroburn", "--mode", "-m", help="Execution mode: zeroburn or naive."),
 ) -> None:
     """Run the agent with interactive approvals."""
-    console.print(f"Running task '{task}' in {repo} (mode: {mode})")
+    console.print(f"[bold blue]Starting ZeroBurn task:[/bold blue] '{task}' in {repo} (mode: {mode})")
+    run_task(task=task, repo=repo, mode=mode)
 
 
 @app.command()
@@ -55,7 +77,8 @@ def mark_confidential(
     path: str = typer.Argument(..., help="Path to repository to mark confidential."),
 ) -> None:
     """Create .zeroburn/confidential in the given repository."""
-    console.print(f"Marked {path} as confidential.")
+    marker = repo_flag.mark_confidential(path)
+    console.print(f"[bold green]Successfully marked repository as confidential:[/bold green] {marker}")
 
 
 @app.command()

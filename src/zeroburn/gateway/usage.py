@@ -9,8 +9,15 @@ from typing import Any
 
 
 def get_default_usage_path() -> Path:
-    base = Path.home() / ".zeroburn"
-    base.mkdir(parents=True, exist_ok=True)
+    if custom := os.environ.get("ZEROBURN_HOME"):
+        base = Path(custom)
+    else:
+        base = Path.home() / ".zeroburn"
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+    except (PermissionError, OSError):
+        base = Path(".zeroburn")
+        base.mkdir(parents=True, exist_ok=True)
     return base / "usage.jsonl"
 
 
