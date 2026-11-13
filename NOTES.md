@@ -29,3 +29,16 @@
     }
     ```
 - Verification scripts: `scripts/check_gateway.sh` and `scripts/check_gateway.py` implemented to run checks (a), (b), and (c).
+
+## Step 2: Config, Errors and Gateway Client
+- Implemented `zeroburn.config`: typed Pydantic models for models, budget, failover, agent, freshness, prices_usd_per_million, and context_limits. Enforces configuration precedence (`env` > repo `zeroburn.toml` > user `~/.zeroburn/zeroburn.toml` > defaults) and fails fast with a readable error message when any model is missing from `prices_usd_per_million`.
+- Implemented `zeroburn.errors`: ZeroBurnError base exception and subclasses: `RateLimited`, `ProviderDown`, `BudgetBlocked`, `GatewayPolicyBlocked`, `BadRequest`, `AuthError`, `PolicyViolation`, `ApprovalDenied`, `BudgetExhausted`.
+- Implemented `zeroburn.gateway.client.GatewayClient`: uses OpenAI SDK pointed at `BIFROST_URL` with virtual key headers (`Authorization: Bearer <vk>` and `x-bf-vk: <vk>`). Fully maps all HTTP error codes and body payloads:
+  - 429 without budget wording -> `RateLimited`
+  - 429 / 403 with budget wording -> `BudgetBlocked`
+  - 403 / 400 with gateway provider refusal -> `GatewayPolicyBlocked`
+  - 400 invalid schema -> `BadRequest`
+  - 401 unauthorized -> `AuthError`
+  - 5xx, timeouts, connection errors -> `ProviderDown`
+- Implemented `zeroburn ping` CLI command testing both virtual keys and reporting serving model.
+- 17 unit tests in `tests/test_client.py`, `tests/test_config.py`, and `tests/test_ping.py` cover all error mappings, config validation, and ping logic.
