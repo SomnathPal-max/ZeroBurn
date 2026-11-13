@@ -30,7 +30,13 @@ def apply_edit(
     except Exception as exc:
         return f"Error reading '{path}': {exc}"
 
-    matches = content.count(old)
+    # Handle CRLF vs LF cross-platform normalization
+    is_crlf = "\r\n" in content
+    normalized_content = content.replace("\r\n", "\n")
+    normalized_old = old.replace("\r\n", "\n")
+    normalized_new = new.replace("\r\n", "\n")
+
+    matches = normalized_content.count(normalized_old)
     if matches == 0:
         return f"Error: The old string was not found in '{path}'."
     if matches > 1:
@@ -40,7 +46,8 @@ def apply_edit(
         )
 
     # Perform substitution
-    new_content = content.replace(old, new, 1)
+    new_normalized = normalized_content.replace(normalized_old, normalized_new, 1)
+    new_content = new_normalized.replace("\n", "\r\n") if is_crlf else new_normalized
 
     # Generate unified diff for user inspection
     old_lines = content.splitlines(keepends=True)

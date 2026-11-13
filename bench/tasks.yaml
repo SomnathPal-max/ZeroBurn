@@ -1,0 +1,35 @@
+- id: task_1
+  name: "fix off-by-one in pagination"
+  prompt: "Fix the off-by-one bug in inventory/pagination.py so tests in tests/test_pagination.py pass."
+  check: "pytest tests/test_pagination.py"
+  reset: "git checkout HEAD -- inventory/pagination.py"
+
+- id: task_2
+  name: "add low_stock function"
+  prompt: "Add a low_stock(tracker, threshold=5) function to inventory/stock.py returning items with quantity <= threshold."
+  check: "pytest tests/test_stock.py"
+  reset: "git checkout HEAD -- inventory/stock.py"
+
+- id: task_3
+  name: "rename disc_rate to discount_rate"
+  prompt: "Rename parameter 'disc_rate' to 'discount_rate' in inventory/pricing.py and inventory/orders.py."
+  check: "pytest tests/test_pricing.py"
+  reset: "git checkout HEAD -- inventory/pricing.py inventory/orders.py"
+
+- id: task_4
+  name: "add quantity validation"
+  prompt: "In inventory/orders.py add validation: raise ValueError('Quantity must be greater than zero') when quantity <= 0."
+  check: "pytest tests/test_orders.py"
+  reset: "git checkout HEAD -- inventory/orders.py"
+
+- id: task_5
+  name: "fix date-parsing bug"
+  prompt: "Fix parse_order_date in inventory/dates.py to correctly parse dates formatted as YYYY-MM-DD."
+  check: "pytest tests/test_dates.py"
+  reset: "git checkout HEAD -- inventory/dates.py"
+
+- id: task_6
+  name: "add --limit CLI flag"
+  prompt: "In inventory/cli.py add the --limit argument to the list command parser."
+  check: "pytest tests/test_cli.py"
+  reset: "git checkout HEAD -- inventory/cli.py"

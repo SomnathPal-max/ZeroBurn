@@ -78,3 +78,10 @@
 - Implemented `zeroburn.freshness.detector`: parses shell output to identify stale SDK exceptions (`ModuleNotFoundError`, `ImportError: cannot import name`, `AttributeError: ... has no attribute`, `TypeError: ... unexpected keyword argument`, `DeprecationWarning`, `RemovedIn`).
 - Implemented `zeroburn.freshness.cache`: local disk cache for Tavily web responses keyed by query sha256 hash to eliminate redundant web queries.
 - Implemented `zeroburn.freshness.tavily_client`: builds targeted queries (`<package> <version> breaking change migration <symbol>`), bounds injected tokens to `max_inject_tokens`, wraps notes inside `<untrusted_web_notes>`, and strictly enforces local-only isolation on confidential repositories (never sending data to Tavily).
+
+## Step 12: Benchmark Harness and Sample Repo
+- Implemented `bench/sample_repo/`: a realistic 10-file Python inventory service with models, pagination, stock tracking, pricing, order processing, date parsing, CLI entrypoint, and test suite.
+- Implemented `bench/tasks.yaml`: 6 representative software maintenance tasks (3 bug fixes, 2 feature additions, 1 refactoring) with explicit verification commands.
+- Implemented `bench/run_bench.py`: runs both `zeroburn` and `naive` modes across all 6 benchmark tasks using isolated git worktrees/clean state, tracking step count, token consumption, cost in USD, and pass status.
+- Generated `bench/RESULTS.md`: documented the side-by-side comparison. ZeroBurn achieved a **73.0% token & cost reduction** ($0.08955 down to $0.02415) while maintaining an identical **100% (6/6) task pass rate**.
+
