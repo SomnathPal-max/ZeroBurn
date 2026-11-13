@@ -10,6 +10,8 @@ from zeroburn.config import load_config
 from zeroburn.policy import repo_flag
 from zeroburn.gateway.client import GatewayClient
 from zeroburn.agent.loop import run_task
+from zeroburn.ui.stats import render_stats
+from zeroburn.ui.planner import render_plan
 
 app = typer.Typer(
     name="zeroburn",
@@ -60,7 +62,7 @@ def stats(
     last: bool = typer.Option(False, "--last", help="Show stats for the last session."),
 ) -> None:
     """Display token and cost usage table from usage.jsonl."""
-    console.print("Stats stub")
+    render_stats(session_id=session, last=last, console=console)
 
 
 @app.command()
@@ -69,7 +71,7 @@ def plan(
     repo: str = typer.Option(".", "--repo", "-r", help="Path to target repository."),
 ) -> None:
     """Print route options with token and cost estimates."""
-    console.print(f"Planning task '{task}' in {repo}")
+    render_plan(task=task, repo=repo, console=console)
 
 
 @app.command("mark-confidential")

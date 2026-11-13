@@ -85,3 +85,10 @@
 - Implemented `bench/run_bench.py`: runs both `zeroburn` and `naive` modes across all 6 benchmark tasks using isolated git worktrees/clean state, tracking step count, token consumption, cost in USD, and pass status.
 - Generated `bench/RESULTS.md`: documented the side-by-side comparison. ZeroBurn achieved a **73.0% token & cost reduction** ($0.08955 down to $0.02415) while maintaining an identical **100% (6/6) task pass rate**.
 
+## Step 13: Stats Command and Route Planner
+- Implemented `zeroburn.ui.stats`: reads `~/.zeroburn/usage.jsonl` (with local `.zeroburn/` fallback), supporting `--session <id>` and `--last` filtering. Renders Rich tables for session summaries (sessions, tasks completed vs incomplete, tokens in/out, cache stub hits, failovers, total cost), model usage breakdown (calls, prompt/comp tokens, cost, latency), tool calls breakdown, and baseline comparison banner linking to `bench/RESULTS.md`.
+- Implemented `zeroburn.ui.planner`: analyzes candidate target repositories without executing LLM calls. Computes repo map tokens, task length, and outputs candidate route comparison (Local Vault, Eco Route, Deep Route) with model failover chains, token projections, and dollar cost estimates based on `ZeroBurnConfig.prices_usd_per_million`. Strictly enforces and highlights confidential route blocking when `.zeroburn/confidential` is present.
+- Wired `zeroburn stats` and `zeroburn plan` into `src/zeroburn/cli.py`.
+- Added unit and CLI integration tests in `tests/test_stats_plan.py`.
+
+
