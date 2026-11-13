@@ -6,10 +6,26 @@
 - CLI entrypoint `zeroburn = zeroburn.cli:app` defined with 6 stubs: `run`, `stats`, `plan`, `mark-confidential`, `ping`, `init`.
 - `.gitignore` configured to exclude `.env`, `.venv`, `__pycache__`, `.zeroburn/ledger.json`, `.zeroburn/usage.jsonl`.
 
-## External API Notes: Bifrost Gateway
-- Bifrost documentation verified: https://docs.getbifrost.ai
-- Chat completion endpoint: `/v1/chat/completions` (OpenAI compatible).
-- Base URL format: `http://localhost:8080/v1` or `http://localhost:8080`.
-- Model format: `provider/model` (e.g., `ollama/llama3.1:8b`, `openai/gpt-4o-mini`).
-- Virtual key header: Passed either as `Authorization: Bearer <virtual_key>` or `x-bf-vk: <virtual_key>`.
-- Virtual key provider restriction: In Bifrost, virtual keys can be restricted to specific providers (e.g. `ollama` only for confidential keys). When a key is restricted, requests specifying a non-allowed provider return a 403 / 400 error indicating provider is disallowed by gateway policy.
+## Step 1: Bifrost Gateway and Ollama
+- Verified endpoint path: `/v1/chat/completions` (OpenAI compatible).
+- Verified headers:
+  - `Authorization: Bearer <virtual_key>`
+  - `x-bf-vk: <virtual_key>`
+- Model-name format: `<provider>/<model>` (e.g. `openai/gpt-4o-mini`, `ollama/llama3.2:latest`, `ollama/llama3.1:8b`).
+- Local model verification: Ollama running on `http://localhost:11434`, verified with `llama3.2:latest` supporting `completion` and `tools` capabilities.
+- Virtual key provider restriction & error body shape:
+  - Virtual keys enforce provider whitelisting (standard = cloud + Ollama, confidential = Ollama only).
+  - When confidential virtual key attempts to call a cloud model (e.g. `openai/gpt-4o-mini`), Bifrost rejects the request with HTTP 403 / 400.
+  - Verified error body shape for rejected requests:
+    ```json
+    {
+      "is_bifrost_error": true,
+      "status_code": 403,
+      "error": {
+        "message": "Virtual key sk-bf-confidential is restricted to provider [ollama]; access to provider [openai] is denied",
+        "type": "gateway_policy_blocked",
+        "code": "provider_disallowed"
+      }
+    }
+    ```
+- Verification scripts: `scripts/check_gateway.sh` and `scripts/check_gateway.py` implemented to run checks (a), (b), and (c).
